@@ -21,7 +21,6 @@ app.post('/', async (request, response) =>{
     const name = request.body.name
     const password = request.body.password
     const email = request.body.email
-    
     sql = `INSERT INTO users (name, password, email) VALUES ('${name}', '${password}', '${email}'); `;
     console.log(sql)
     response.send(await query(sql))
@@ -33,9 +32,17 @@ app.delete('/', async (request, response) =>{
     response.send(await query(sql))
 });
 
+app.get('/', async (request, response) => {
+    sql = "SELECT * FROM users";
+    console.log(sql)
+    console.log(request.query)
+    response.send(await query(sql))
+})
+
+app.listen(3000)
+
 const query  = (sql) => {
     return new Promise((resolve, reject) => {
-        const arr = []
         db.all(sql, [], (err, rows) => {
             if (err) {
                throw err;
@@ -46,18 +53,9 @@ const query  = (sql) => {
                 password: row.password,
                 email: row.email
                })
-               console.log(row);
+               console.log(rows);
            });
-           resolve(arr)
+           resolve(rows)
        });
    })
 }
-
-app.get('/', async (request, response) => {
-    sql = "SELECT * FROM users";
-    console.log(sql)
-    console.log(request.query)
-    response.send(await query(sql))
-})
-
-app.listen(3000)
