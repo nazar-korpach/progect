@@ -19,7 +19,6 @@ app.post('/', async (request, response) =>{
     }
     console.log(request.body)
     const name = request.body.name
-    //console.log(name)
     const password = request.body.password
     const email = request.body.email
     
@@ -38,7 +37,7 @@ const query  = (sql) => {
     return new Promise((resolve, reject) => {
         const arr = []
         db.all(sql, [], (err, rows) => {
-           if (err) {
+            if (err) {
                throw err;
             }
             rows.forEach((row) => {
