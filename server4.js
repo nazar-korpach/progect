@@ -2,6 +2,7 @@ const express = require('express')
 const bodyParser = require('body-parser');
 const { response } = require('express');
 const { compileFunction } = require('vm');
+const { basename } = require('path');
 const app = express()
 
 app.use(bodyParser({extended:  true}));
@@ -18,16 +19,16 @@ app.post('/', async (request, response) =>{
         return response.send('err 400')
     }
     console.log(request.body)
-    const name = request.body.name
-    const password = request.body.password
-    const email = request.body.email
+    const name = (Buffer.from(request.body.name).toString("base64"))
+    const password = (Buffer.from(request.body.password).toString("base64"))
+    const email = (Buffer.from(request.body.email).toString("base64"))
     sql = `INSERT INTO users (name, password, email) VALUES ('${name}', '${password}', '${email}'); `;
     console.log(sql)
     response.send(await query(sql))
 });
 
 app.delete('/', async (request, response) =>{
-    const name = request.query.name
+    const name = (Buffer.from(request.query.name).toString("base64"))
     sql = `DELETE FROM users WHERE name =  ('${name}') `;
     response.send(await query(sql))
 });
@@ -43,19 +44,20 @@ app.listen(3000)
 
 const query  = (sql) => {
     return new Promise((resolve, reject) => {
+        const arr = []
         db.all(sql, [], (err, rows) => {
             if (err) {
                throw err;
             }
             rows.forEach((row) => {
                arr.push({
-                name: row.name,
-                password: row.password,
-                email: row.email
+                name: (Buffer.from(row.name, "base64").toString("ascii")),
+                password: (Buffer.from(row.password, "base64").toString("ascii")),
+                email: (Buffer.from(row.email, "base64").toString("ascii"))
                })
-               console.log(rows);
+               console.log(arr);
            });
-           resolve(rows)
+           resolve(arr)
        });
    })
 }
