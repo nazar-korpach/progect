@@ -40,8 +40,8 @@ const query  = (sql) => {
         db.all(sql, [], (err, rows) => {
            if (err) {
                throw err;
-           }
-           rows.forEach((row) => {
+            }
+            rows.forEach((row) => {
                arr.push({
                 name: row.name,
                 password: row.password,
