@@ -21,23 +21,11 @@ app.post("/", async (request, response) =>{
         return response.send('err 400')
     }
     console.log(request.body)
-    //const name = (Buffer.from(request.body.name).toString("base64"))
-    //const password = (Buffer.from(request.body.password).toString("base64"))
-    //const email = (Buffer.from(request.body.email).toString("base64"))
-    const name = request.body.name
-    //const password = request.body.password
     const password = bcrypt.hashSync(request.body.password, salt)
     const email = request.body.email
     sql = `INSERT INTO users (name, password, email) VALUES (?, ?, ?); `;
     console.log(sql)
     response.send(await query(sql, [name, password, email] ) )
-});
-
-app.delete("/", async (request, response) =>{
-    //const name = (Buffer.from(request.query.name).toString("base64"))
-    const name = request.query.name
-    sql = `DELETE FROM users WHERE name = ? `;
-    response.send(await query(sql, [name]))
 });
 
 app.post("/:login", async (request, response) =>{
@@ -56,6 +44,11 @@ app.post("/:login", async (request, response) =>{
     else response.send({status: false})
 });
 
+app.delete("/", async (request, response) =>{
+    const name = request.query.name
+    sql = `DELETE FROM users WHERE name = ? `;
+    response.send(await query(sql, [name]))
+});
 
 app.get("/", async (request, response) => {
     sql = "SELECT * FROM users";
