@@ -58,7 +58,7 @@ fn cheak(connection: &sqlite::Connection, user: Json<Member>) -> bool {
         .prepare("SELECT * FROM user WHERE name = ? AND password = ?")
         .unwrap().cursor();
     let name = &user.name;
-    let password = &user.password;
+    let password = hashing(&user.password);
     cursor.
         bind(&[Value::String(name.to_string()),
             Value::String(password.to_string())])
@@ -101,7 +101,7 @@ fn insert(connection: sqlite::Connection, user: Json<User>) {
     use sqlite::Value;
     let mut cursor =  connection.prepare("INSERT INTO user VALUES (?, ?, ?)" ).unwrap().cursor();
     let name = &user.name;
-    let password = &user.password;
+    let password = hashing(&user.password);
     let email = &user.email;
     cursor.
         bind(&[Value::String(name.to_string()),
@@ -137,4 +137,24 @@ fn got (connection: &sqlite::Connection) -> String {
         st += "\n";
     }
     st 
+}
+
+use sha2::{Sha256, Digest};
+use std::fmt::Write;
+
+fn hashing(st: &str) -> String{
+    let mut hasher = Sha256::new();
+    hasher.update(st);
+    let result = hasher.finalize();
+    encode_hex(&result)
+}
+
+
+
+fn encode_hex(bytes: &[u8]) -> String {
+    let mut s = String::with_capacity(bytes.len() * 2);
+    for &b in bytes {
+        write!(&mut s, "{:02x}", b);
+    }
+    s
 }
