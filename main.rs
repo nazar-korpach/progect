@@ -75,9 +75,9 @@ fn cheak(connection: &sqlite::Connection, user: Json<Member>) -> bool {
 }
 
 #[get("/")]
-fn get() -> String {
+fn get() -> content::Json<String> {
     let connection  = sqlite::open("memory.db").unwrap();
-    got(&connection)
+    content::Json(got(&connection))
 }
 
 #[post("/", format = "application/json", data = "<user>")]
