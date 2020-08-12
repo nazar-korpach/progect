@@ -1,8 +1,9 @@
 #![feature(proc_macro_hygiene, decl_macro)]
-#![feature(core_intrinsics)]
 
 #[macro_use] extern crate rocket;
+#[macro_use] extern crate rocket_contrib;
 
+use rocket_contrib::databases::rusqlite;
 use rocket::response::content;
 use serde::Deserialize;
 use rocket_contrib::json::Json;
@@ -22,110 +23,86 @@ struct Member {
     password: String
 }
 
+
+#[database("sqlite_logs")]
+struct LogsDbConn(rusqlite::Connection);
+
+fn main() {
+    //let a = LogsDbConn("aa");
+    //strange(a);
+    rocket::ignite()
+       .attach(LogsDbConn::fairing())
+       .mount("/", routes![get, new_user, delete, login])
+       .launch();
+}
+
 #[delete("/?<name>")]
-fn delete(name: String){
-    let connection  = sqlite::open("memory.db").unwrap();
+fn delete(name: String, connection: LogsDbConn){
     println!("{}", name);
-    del(connection, name);
+    del(&connection, name);
 }
 
-fn del(connection: sqlite::Connection, name: String){
-    use sqlite::Value;
-    let mut cursor =  connection.prepare("DELETE FROM user WHERE name = ? ").unwrap().cursor();
-    cursor.
-        bind(&[Value::String(name)])
-        .unwrap();
-    while let Some(row) = cursor.next().unwrap() {
-        println!("name = {}", row[0].as_string().unwrap());
-        println!("password = {}", row[1].as_string().unwrap());
-        println!("emeil = {}", row[2].as_string().unwrap());
-    }
+fn del(connection: &LogsDbConn, name: String){
+    connection.execute("DELETE FROM users WHERE name = ? ", &[&name]).unwrap();
 }
-
 
 #[post("/login", format = "application/json", data = "<user>")]
-fn login(user: Json<Member>) -> content::Json<String>{
-    let connection  = sqlite::open("memory.db").unwrap();
+fn login(user: Json<Member>, connection: LogsDbConn) -> content::Json<String>{
     match cheak(&connection, user){
         true => content::Json("{'status': 'True'}".to_string()),
         false => content::Json("{status: 'False'}".to_string())
     }
 }
 
-fn cheak(connection: &sqlite::Connection, user: Json<Member>) -> bool {
-    use sqlite::Value;
-    let mut cursor = connection
-        .prepare("SELECT * FROM user WHERE name = ? AND password = ?")
-        .unwrap().cursor();
+fn cheak(connection: &LogsDbConn, user: Json<Member>) -> bool {
     let name = &user.name;
     let password = hashing(&user.password) + "oBI$Xg(Z?3w]SyE_UW2n";
-    cursor.
-        bind(&[Value::String(name.to_string()),
-            Value::String(password.to_string())])
-        .unwrap();
+    let query = format!("SELECT * FROM users WHERE name = '{}' AND password = '{}'", name, password);
+    println!("{}", query);
+    let mut data = connection
+        .prepare(&query).unwrap();
+
     let mut is: bool = false;
-    while let Some(row) = cursor.next().unwrap() {
-        println!("name = {}", row[0].as_string().unwrap());
-        println!("password = {}", row[1].as_string().unwrap());
-        println!("emeil = {}", row[2].as_string().unwrap());
+    let person_iter = data.query_map(&[], |row| {
+        User {
+            name: row.get(0),
+            password: row.get(1),
+            email: row.get(2)
+        }
+    }).unwrap();
+    for person in person_iter {
         is = true;
+        break
     }
     println!("{}", is);
     is
 }
 
 #[get("/")]
-fn get() -> content::Json<String> {
-    let connection  = sqlite::open("memory.db").unwrap();
+fn get(connection: LogsDbConn) -> content::Json<String> {
     content::Json(got(&connection))
 }
 
-#[post("/", format = "application/json", data = "<user>")]
-fn new_user(user: Json<User>) {
-    let connection  = sqlite::open("memory.db").unwrap();
-    insert(connection, user);
-}
-
-fn main() {
-    let connection: sqlite::Connection  = sqlite::open("memory.db").unwrap();
-    got(&connection);
-    rocket::ignite().mount("/", routes![get, new_user, delete, login]).launch();
-}
-
-fn insert(connection: sqlite::Connection, user: Json<User>) {
-    use sqlite::Value;
-    let mut cursor =  connection.prepare("INSERT INTO user VALUES (?, ?, ?)" ).unwrap().cursor();
-    let name = &user.name;
-    let password = hashing(&user.password) + "oBI$Xg(Z?3w]SyE_UW2n";
-    let email = &user.email;
-    cursor.
-        bind(&[Value::String(name.to_string()),
-            Value::String(password.to_string()), 
-            Value::String(email.to_string())])
-        .unwrap();
-    while let Some(row) = cursor.next().unwrap() {
-        println!("name = {}", row[0].as_string().unwrap());
-        println!("password {}", row[1].as_string().unwrap());
-        println!("emeil {}", row[2].as_string().unwrap());
-    }
-}
-
-fn got (connection: &sqlite::Connection) -> String {
-    use sqlite::State;
+fn got (connection: &LogsDbConn) -> String {
     let mut statement = connection
-        .prepare("SELECT * FROM user")
+        .prepare("SELECT * FROM users")
         .unwrap();
     let mut names: [String; 32] = Default::default();
     let mut i = 0;
-    while let State::Row = statement.next().unwrap() {
-        println!("name = {}", statement.read::<String>(0).unwrap());
-        println!("password = {}", statement.read::<String>(1).unwrap());
-        println!("emeil= {}", statement.read::<String>(2).unwrap());
-        names[i] =  format!("name: {}, password: {}, emeil: {}", statement.read::<String>(0).unwrap(),
-        &statement.read::<String>(1).unwrap(),
-        &statement.read::<String>(2).unwrap());
-        i += 1;
-    }  
+
+    let person_iter = statement.query_map(&[], |row| {
+        User {
+            name: row.get(0),
+            password: row.get(1),
+            email: row.get(2),
+        }
+    }).unwrap();
+    for person in person_iter {
+        let a = person.unwrap();
+        names[i] = format!("name: {}, password {}, emeil {}", a.name, a.password, a.email);
+        println!("{}", names[i]);
+        i += 1
+    }
     let mut st: String = String::from("");
     st += "{\n";
     for j in 0..i {
@@ -140,6 +117,18 @@ fn got (connection: &sqlite::Connection) -> String {
     }
     st +="}";
     st 
+}
+
+#[post("/", format = "application/json", data = "<user>")]
+fn new_user(user: Json<User>, connection: LogsDbConn) {
+    insert(&connection, user);
+}
+
+fn insert(connection: &LogsDbConn, user: Json<User>) {
+    let name = &user.name;
+    let password = hashing(&user.password) + "oBI$Xg(Z?3w]SyE_UW2n";
+    let email = &user.email;    
+    connection.execute("INSERT INTO users VALUES (?, ?, ?)", &[name, &password, email]).unwrap();
 }
 
 fn hashing(st: &str) -> String{
