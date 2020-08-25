@@ -4,9 +4,11 @@ const { response } = require("express");
 const { compileFunction } = require("vm");
 const { basename } = require("path");
 const crypto = require("crypto");
+const cors = require("cors");
 const app = express();
 const salt = "$2b$05$GhvtR0CxHt3r.sfk/RpOCu";
 
+app.use(cors())
 app.use(bodyParser({extended:  true}));
 const sqlite3 = require('sqlite3').verbose();
 let db = new sqlite3.Database('./users.db', (err) => {
@@ -33,6 +35,7 @@ app.post("/login", async (request, response) =>{
     if (!request.body){
         return response.send('err 400')
     }
+    console.log(request.body, request.body.name, request.body.password)
     const login = request.body.name;
     const password = salt + crypto.createHash("SHA256").update(request.body.password).digest("hex");
     sql = `SELECT * FROM users 
