@@ -1,0 +1,18 @@
+<button (click)="search()">{{buttonName('search')}}</button><br>
+
+<button *ngIf="response" (click)="changeMode()">{{buttonName('close/open')}}</button><br>
+
+<div *ngIf="tableMode" >
+    <table border="1" >
+      <tr>
+        <th>name</th>
+        <th>password</th>
+        <th>email</th>
+      </tr>
+      <tr *ngFor="let i of response">
+        <th>{{i.name}}</th>
+        <th>{{i.password}}</th>
+        <th>{{i.email}}</th>
+      </tr>
+    </table>
+  </div>

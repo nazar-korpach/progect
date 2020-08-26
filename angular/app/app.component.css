@@ -1,0 +1,25 @@
+button{
+    height: 1.5em;
+    width: 4.5em;
+    display: block;
+    position: relative;
+    margin: 0 auto;
+    margin-top: 0.5em;
+    font-size: 2em;
+}
+
+button.home{
+    height: 1.5em;
+    width: 4.5em;
+    margin: auto;
+    display: block;
+    position: relative;
+    margin: 0 auto;
+    margin-top: 8%;
+    font-size: 2em;
+}
+
+h1{
+    text-align: center;
+    margin-bottom: 10%;
+}
