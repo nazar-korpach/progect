@@ -25,7 +25,7 @@ export class FindComponent implements OnInit {
   constructor(private http: HttpClient){}
  
   search(){
-    this.http.get('http://localhost:3000').subscribe((response) => {
+    this.http.get('https://immense-fortress-17915.herokuapp.com').subscribe((response) => {
       alert('request success')
       this.response = response
     })

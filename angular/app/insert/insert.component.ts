@@ -15,7 +15,7 @@ export class InsertComponent implements OnInit {
 
   send(){
     if (this.userName && this.userPassword && this.userEmail){
-      this.http.post('http://localhost:3000', {name: this.userName, password: this.userPassword, email: this.userEmail}).subscribe((response)=>
+      this.http.post('https://immense-fortress-17915.herokuapp.com/', {name: this.userName, password: this.userPassword, email: this.userEmail}).subscribe((response)=>
       alert('input success'))
     }
     else {

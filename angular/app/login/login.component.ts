@@ -15,7 +15,7 @@ export class LoginComponent implements OnInit {
 
   cheak(){
     if (this.cheakName && this.cheakPassword)
-      this.http.post('http://localhost:3000/login', {name: this.cheakName, password: this.cheakPassword}).subscribe((response: any) => {
+      this.http.post('https://immense-fortress-17915.herokuapp.com/login', {name: this.cheakName, password: this.cheakPassword}).subscribe((response: any) => {
         if (response.status) alert('you logined')
         else alert('wrong login or password')
       })

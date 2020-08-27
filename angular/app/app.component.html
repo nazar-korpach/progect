@@ -1,14 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
-  <base href="/">
-</head>
-<body>
-
-  <h1 *ngIf="home">Whot are you going to do?</h1>
+  <h1 *ngIf="home">What are you going to do?</h1>
 
   <nav>
     <button *ngIf="home" routerLink="/find" (click)="homeChange()" >find</button><br>
@@ -18,6 +8,3 @@
     <button class="home" *ngIf="!home" routerLink="" (click)="homeChange()" >home</button><br>
   </nav>
   <router-outlet></router-outlet>
-
-</body>
-</html>
